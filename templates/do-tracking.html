@@ -1,0 +1,47 @@
+<script type="text/x-template" id="tpl-do-tracking">
+    <div>
+        <h2><span class="icon-badge">📋</span> Daftar Pengiriman</h2>
+        <div class="filter-bar" style="margin-bottom:20px;">
+            <div class="filter-group">
+                <label>Cari (No DO / NIM)</label>
+                <input type="text" v-model="searchQuery" placeholder="Masukkan No DO atau NIM..." @keyup.enter="search" @keyup.esc="resetSearch">
+                <button @click="search" style="margin-top:5px;">Cari</button>
+                <button @click="resetSearch" class="btn-reset" style="margin-top:5px;">Reset</button>
+            </div>
+        </div>
+
+        <div v-if="filteredTrackingList.length === 0">Tidak ada data</div>
+        <div v-for="track in filteredTrackingList" :key="track.nomorDO" class="tracking-card">
+            <div><strong>{{ track.nomorDO }}</strong>
+                <span :class="'status-badge ' + (track.status=='Diproses'?'status-diproses':track.status=='Dalam Perjalanan'?'status-perjalanan':'status-selesai')">{{ track.status }}</span>
+            </div>
+            <p>NIM: {{ track.nim }} | Nama: {{ track.nama }} | Ekspedisi: {{ track.ekspedisi }} | Tgl Kirim: {{ formatTanggal(track.tanggalKirim) }}</p>
+            <p>Paket: {{ getPaketNama(track.paket) }} | Total: {{ formatRupiah(track.total) }}</p>
+            <div v-if="track.perjalanan">
+                <strong>Riwayat Perjalanan:</strong>
+                <ul>
+                    <li v-for="rj in track.perjalanan">{{ rj.waktu }} - {{ rj.keterangan }}</li>
+                </ul>
+            </div>
+            <!-- Tambah perjalanan -->
+            <div style="margin-top:10px;">
+                <input type="text" v-model="newPerjalanan[track.nomorDO]" placeholder="Keterangan baru..." @keyup.enter="addPerjalanan(track)" style="width:60%;">
+                <button @click="addPerjalanan(track)">+ Tambah Perjalanan</button>
+            </div>
+        </div>
+
+        <div class="form-tracking">
+            <h2>➕ Tambah Pengiriman Baru</h2>
+            <p>Nomor DO otomatis: <strong>{{ generatedDONumber }}</strong></p>
+            <div class="form-group"><label>NIM</label><input type="text" v-model="newDO.nim" @keyup.enter="addTracking"><span class="error">{{ errors.nim }}</span></div>
+            <div class="form-group"><label>Nama</label><input type="text" v-model="newDO.nama" @keyup.enter="addTracking"><span class="error">{{ errors.nama }}</span></div>
+            <div class="form-group"><label>Ekspedisi</label><select v-model="newDO.ekspedisi"><option v-for="e in ekspedisiList" :value="e.kode">{{ e.nama }}</option></select><span class="error">{{ errors.ekspedisi }}</span></div>
+            <div class="form-group"><label>Paket</label><select v-model="newDO.paketKode"><option value="">-- Pilih --</option><option v-for="p in paketList" :value="p.kode">{{ p.kode }} - {{ p.nama }} ({{ formatRupiah(p.harga) }})</option></select><span class="error">{{ errors.paketKode }}</span></div>
+            <div v-if="selectedPaketDetail" class="detail-paket">Isi paket: {{ selectedPaketDetail.isi.join(', ') }} | Harga: {{ formatRupiah(selectedPaketDetail.harga) }}</div>
+            <div class="form-group"><label>Tanggal Kirim</label><input type="date" v-model="newDO.tanggalKirim" @keyup.enter="addTracking"><span class="error">{{ errors.tanggalKirim }}</span></div>
+            <div class="form-group"><label>Total (otomatis)</label><input :value="formatRupiah(newDO.total)" disabled style="background:#e9ecef;"></div>
+            <button @click="addTracking">Simpan DO Baru</button>
+            <button @click="resetForm" class="btn-reset">Reset</button>
+        </div>
+    </div>
+</script>
